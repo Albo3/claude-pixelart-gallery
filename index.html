@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Art Gallery</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Pixel Art Gallery</h1>
+        <nav>
+            <button id="create-new">Create New</button>
+            <button id="gallery-view">Gallery</button>
+        </nav>
+    </header>
+
+    <main>
+        <section id="editor" class="hidden">
+            <div class="toolbar">
+                <div class="tool-group">
+                    <label for="grid-size">Grid Size:</label>
+                    <select id="grid-size">
+                        <option value="8">8×8</option>
+                        <option value="16" selected>16×16</option>
+                        <option value="32">32×32</option>
+                        <option value="64">64×64</option>
+                    </select>
+                </div>
+                <div class="tool-group">
+                    <label for="color-picker">Color:</label>
+                    <input type="color" id="color-picker" value="#000000">
+                </div>
+                <div class="tool-group">
+                    <button id="eraser">Eraser</button>
+                    <button id="clear-all">Clear All</button>
+                </div>
+                <div class="tool-group">
+                    <button id="save-artwork">Save</button>
+                </div>
+            </div>
+            <div class="canvas-container">
+                <div id="pixel-canvas"></div>
+            </div>
+        </section>
+
+        <section id="gallery">
+            <div class="gallery-controls">
+                <input type="text" id="search" placeholder="Search by title...">
+            </div>
+            <div id="artwork-grid"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2025 Pixel Art Gallery</p>
+    </footer>
+
+    <div id="save-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Save Your Artwork</h2>
+            <form id="save-form">
+                <div class="form-group">
+                    <label for="artwork-title">Title:</label>
+                    <input type="text" id="artwork-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="artwork-desc">Description:</label>
+                    <textarea id="artwork-desc"></textarea>
+                </div>
+                <div class="button-group">
+                    <button type="button" id="cancel-save">Cancel</button>
+                    <button type="submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
