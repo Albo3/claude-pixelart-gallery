@@ -32,11 +32,25 @@
                     <input type="color" id="color-picker" value="#000000">
                 </div>
                 <div class="tool-group">
+                    <button id="add-to-palette">+ Add to Palette</button>
+                </div>
+                <div class="tool-group palette-container">
+                    <div id="color-palette" class="color-palette"></div>
+                </div>
+                <div class="tool-group">
                     <button id="eraser">Eraser</button>
+                    <button id="bucket-fill">Fill</button>
                     <button id="clear-all">Clear All</button>
                 </div>
                 <div class="tool-group">
                     <button id="save-artwork">Save</button>
+                </div>
+                <div class="tool-group">
+                    <button id="animation-btn">Animation</button>
+                </div>
+                <div class="tool-group">
+                    <button id="export-svg">Export SVG</button>
+                    <button id="export-png">Export PNG</button>
                 </div>
             </div>
             <div class="canvas-container">
@@ -73,6 +87,32 @@
                     <button type="submit">Save</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="animation-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Animation Frames</h2>
+            <div class="frames-container">
+                <div id="frames-list"></div>
+                <div class="frames-controls">
+                    <button id="add-frame">Add Frame</button>
+                    <button id="play-animation">Play</button>
+                    <button id="stop-animation">Stop</button>
+                </div>
+                <div class="animation-preview">
+                    <div id="animation-display"></div>
+                    <div class="animation-controls">
+                        <label for="animation-speed">Speed (fps):</label>
+                        <input type="range" id="animation-speed" min="1" max="24" value="12">
+                        <span id="speed-value">12 fps</span>
+                    </div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button type="button" id="close-animation">Close</button>
+                <button type="button" id="save-animation">Save Animation</button>
+            </div>
         </div>
     </div>
 

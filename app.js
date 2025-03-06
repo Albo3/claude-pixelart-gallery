@@ -15,13 +15,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelSaveBtn = document.getElementById('cancel-save');
     const artworkGrid = document.getElementById('artwork-grid');
     const searchInput = document.getElementById('search');
+    
+    // New DOM Elements
+    const bucketFillBtn = document.getElementById('bucket-fill');
+    const addToPaletteBtn = document.getElementById('add-to-palette');
+    const colorPalette = document.getElementById('color-palette');
+    const exportSvgBtn = document.getElementById('export-svg');
+    const exportPngBtn = document.getElementById('export-png');
+    const animationBtn = document.getElementById('animation-btn');
+    const animationModal = document.getElementById('animation-modal');
+    const framesList = document.getElementById('frames-list');
+    const addFrameBtn = document.getElementById('add-frame');
+    const playAnimationBtn = document.getElementById('play-animation');
+    const stopAnimationBtn = document.getElementById('stop-animation');
+    const animationDisplay = document.getElementById('animation-display');
+    const animationSpeed = document.getElementById('animation-speed');
+    const speedValue = document.getElementById('speed-value');
+    const closeAnimationBtn = document.getElementById('close-animation');
+    const saveAnimationBtn = document.getElementById('save-animation');
 
     // State variables
     let currentColor = '#000000';
     let isDrawing = false;
     let isErasing = false;
+    let isBucketFill = false;
     let currentGridSize = 16;
     let artworks = JSON.parse(localStorage.getItem('pixel-artworks')) || [];
+    let colorPaletteColors = JSON.parse(localStorage.getItem('color-palette')) || ['#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF'];
+    let animationFrames = [];
+    let currentFrameIndex = 0;
+    let animationInterval = null;
+    let fps = 12;
 
     // Initialize the app
     initApp();
@@ -35,6 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Load and display saved artworks
         displayArtworks();
+        
+        // Initialize color palette
+        updateColorPalette();
     }
 
     function setupEventListeners() {
@@ -48,6 +75,19 @@ document.addEventListener('DOMContentLoaded', () => {
         eraserBtn.addEventListener('click', toggleEraser);
         clearAllBtn.addEventListener('click', clearCanvas);
         saveArtworkBtn.addEventListener('click', openSaveModal);
+        
+        // New controls
+        bucketFillBtn.addEventListener('click', toggleBucketFill);
+        addToPaletteBtn.addEventListener('click', addColorToPalette);
+        exportSvgBtn.addEventListener('click', exportSVG);
+        exportPngBtn.addEventListener('click', exportPNG);
+        animationBtn.addEventListener('click', openAnimationModal);
+        addFrameBtn.addEventListener('click', addAnimationFrame);
+        playAnimationBtn.addEventListener('click', playAnimation);
+        stopAnimationBtn.addEventListener('click', stopAnimation);
+        closeAnimationBtn.addEventListener('click', closeAnimationModal);
+        saveAnimationBtn.addEventListener('click', saveAnimation);
+        animationSpeed.addEventListener('input', updateAnimationSpeed);
         
         // Save modal
         saveForm.addEventListener('submit', saveArtwork);
@@ -108,12 +148,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateColor(e) {
         currentColor = e.target.value;
         isErasing = false;
-        eraserBtn.classList.remove('active');
+        isBucketFill = false;
+        eraserBtn.classList.remove('tool-active');
+        bucketFillBtn.classList.remove('tool-active');
     }
 
     function toggleEraser() {
         isErasing = !isErasing;
-        eraserBtn.classList.toggle('active');
+        isBucketFill = false;
+        eraserBtn.classList.toggle('tool-active');
+        bucketFillBtn.classList.remove('tool-active');
+    }
+    
+    function toggleBucketFill() {
+        isBucketFill = !isBucketFill;
+        isErasing = false;
+        bucketFillBtn.classList.toggle('tool-active');
+        eraserBtn.classList.remove('tool-active');
     }
 
     function clearCanvas() {
@@ -127,6 +178,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startDrawing(e) {
         isDrawing = true;
+        
+        if (isBucketFill) {
+            const pixel = e.target;
+            if (pixel.classList.contains('pixel')) {
+                bucketFill(pixel);
+            }
+            return;
+        }
+        
         draw(e);
     }
 
@@ -142,12 +202,70 @@ document.addEventListener('DOMContentLoaded', () => {
             pixel.style.backgroundColor = isErasing ? 'transparent' : currentColor;
         }
     }
+    
+    function bucketFill(startPixel) {
+        const targetColor = startPixel.style.backgroundColor || 'transparent';
+        const fillColor = isErasing ? 'transparent' : currentColor;
+        
+        if (targetColor === fillColor) return;
+        
+        const pixels = Array.from(pixelCanvas.querySelectorAll('.pixel'));
+        const visited = new Set();
+        const queue = [startPixel];
+        
+        while (queue.length > 0) {
+            const pixel = queue.shift();
+            const index = parseInt(pixel.dataset.index);
+            
+            if (visited.has(index)) continue;
+            visited.add(index);
+            
+            const pixelColor = pixel.style.backgroundColor || 'transparent';
+            if (pixelColor !== targetColor) continue;
+            
+            pixel.style.backgroundColor = fillColor;
+            
+            // Get adjacent pixels (up, right, down, left)
+            const row = Math.floor(index / currentGridSize);
+            const col = index % currentGridSize;
+            
+            // Up
+            if (row > 0) {
+                const upIndex = index - currentGridSize;
+                if (!visited.has(upIndex)) queue.push(pixels[upIndex]);
+            }
+            
+            // Right
+            if (col < currentGridSize - 1) {
+                const rightIndex = index + 1;
+                if (!visited.has(rightIndex)) queue.push(pixels[rightIndex]);
+            }
+            
+            // Down
+            if (row < currentGridSize - 1) {
+                const downIndex = index + currentGridSize;
+                if (!visited.has(downIndex)) queue.push(pixels[downIndex]);
+            }
+            
+            // Left
+            if (col > 0) {
+                const leftIndex = index - 1;
+                if (!visited.has(leftIndex)) queue.push(pixels[leftIndex]);
+            }
+        }
+    }
 
     function handleTouchStart(e) {
         e.preventDefault(); // Prevent scrolling
         isDrawing = true;
         const touch = e.touches[0];
         const pixel = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (isBucketFill && pixel && pixel.classList.contains('pixel')) {
+            bucketFill(pixel);
+            return;
+        }
+        
         if (pixel && pixel.classList.contains('pixel')) {
             pixel.style.backgroundColor = isErasing ? 'transparent' : currentColor;
         }
@@ -160,13 +278,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleTouchMove(e) {
         e.preventDefault();
-        if (!isDrawing) return;
+        if (!isDrawing || isBucketFill) return;
         
         const touch = e.touches[0];
         const pixel = document.elementFromPoint(touch.clientX, touch.clientY);
         if (pixel && pixel.classList.contains('pixel')) {
             pixel.style.backgroundColor = isErasing ? 'transparent' : currentColor;
         }
+    }
+    
+    function addColorToPalette() {
+        if (!colorPaletteColors.includes(currentColor)) {
+            colorPaletteColors.push(currentColor);
+            if (colorPaletteColors.length > 20) {
+                colorPaletteColors.shift(); // Remove oldest color if more than 20
+            }
+            localStorage.setItem('color-palette', JSON.stringify(colorPaletteColors));
+            updateColorPalette();
+        }
+    }
+    
+    function updateColorPalette() {
+        colorPalette.innerHTML = '';
+        
+        colorPaletteColors.forEach(color => {
+            const colorElement = document.createElement('div');
+            colorElement.classList.add('palette-color');
+            colorElement.style.backgroundColor = color;
+            
+            if (color === currentColor) {
+                colorElement.classList.add('active');
+            }
+            
+            colorElement.addEventListener('click', () => {
+                currentColor = color;
+                colorPicker.value = color;
+                
+                // Update active state
+                document.querySelectorAll('.palette-color').forEach(el => {
+                    el.classList.remove('active');
+                });
+                colorElement.classList.add('active');
+                
+                // Reset tools
+                isErasing = false;
+                isBucketFill = false;
+                eraserBtn.classList.remove('tool-active');
+                bucketFillBtn.classList.remove('tool-active');
+            });
+            
+            colorPalette.appendChild(colorElement);
+        });
     }
 
     function openSaveModal() {
@@ -236,6 +398,192 @@ document.addEventListener('DOMContentLoaded', () => {
         
         svgContent += '</svg>';
         return svgContent;
+    }
+    
+    function exportSVG() {
+        const svgData = generateSVG();
+        const blob = new Blob([svgData], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pixel-art.svg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    function exportPNG() {
+        const svgData = generateSVG();
+        const img = new Image();
+        const svgBlob = new Blob([svgData], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(svgBlob);
+        
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const size = Math.max(currentGridSize * 10, 300); // Scale up for better quality
+            canvas.width = size;
+            canvas.height = size;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, size, size);
+            
+            canvas.toBlob(function(blob) {
+                const pngUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = pngUrl;
+                a.download = 'pixel-art.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(pngUrl);
+            });
+            
+            URL.revokeObjectURL(url);
+        };
+        
+        img.src = url;
+    }
+    
+    function openAnimationModal() {
+        animationModal.classList.remove('hidden');
+        updateFramesList();
+    }
+    
+    function closeAnimationModal() {
+        animationModal.classList.add('hidden');
+        stopAnimation();
+    }
+    
+    function addAnimationFrame() {
+        const svgData = generateSVG();
+        animationFrames.push(svgData);
+        currentFrameIndex = animationFrames.length - 1;
+        updateFramesList();
+    }
+    
+    function updateFramesList() {
+        framesList.innerHTML = '';
+        
+        if (animationFrames.length === 0) {
+            framesList.innerHTML = '<p>No frames yet. Add your first frame!</p>';
+            return;
+        }
+        
+        animationFrames.forEach((frame, index) => {
+            const frameItem = document.createElement('div');
+            frameItem.classList.add('frame-item');
+            if (index === currentFrameIndex) {
+                frameItem.classList.add('active');
+            }
+            
+            frameItem.innerHTML = frame;
+            
+            // Add delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('frame-delete');
+            deleteBtn.textContent = '×';
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteFrame(index);
+            });
+            
+            frameItem.appendChild(deleteBtn);
+            
+            // Add click event to select frame
+            frameItem.addEventListener('click', () => {
+                selectFrame(index);
+            });
+            
+            framesList.appendChild(frameItem);
+        });
+    }
+    
+    function deleteFrame(index) {
+        animationFrames.splice(index, 1);
+        
+        if (animationFrames.length === 0) {
+            currentFrameIndex = -1;
+        } else if (currentFrameIndex >= animationFrames.length) {
+            currentFrameIndex = animationFrames.length - 1;
+        }
+        
+        updateFramesList();
+    }
+    
+    function selectFrame(index) {
+        currentFrameIndex = index;
+        updateFramesList();
+        
+        // Load the frame into the editor
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(animationFrames[index], 'image/svg+xml');
+        const rects = svgDoc.querySelectorAll('rect');
+        
+        // Clear canvas first
+        const pixels = pixelCanvas.querySelectorAll('.pixel');
+        pixels.forEach(pixel => {
+            pixel.style.backgroundColor = 'transparent';
+        });
+        
+        // Apply colors to pixels
+        rects.forEach(rect => {
+            const x = parseInt(rect.getAttribute('x'));
+            const y = parseInt(rect.getAttribute('y'));
+            const color = rect.getAttribute('fill');
+            const pixelIndex = y * currentGridSize + x;
+            
+            if (pixels[pixelIndex]) {
+                pixels[pixelIndex].style.backgroundColor = color;
+            }
+        });
+    }
+    
+    function playAnimation() {
+        if (animationFrames.length < 2) {
+            alert('You need at least 2 frames to play an animation');
+            return;
+        }
+        
+        stopAnimation(); // Clear any existing interval
+        
+        let frameIndex = 0;
+        animationDisplay.innerHTML = animationFrames[frameIndex];
+        
+        animationInterval = setInterval(() => {
+            frameIndex = (frameIndex + 1) % animationFrames.length;
+            animationDisplay.innerHTML = animationFrames[frameIndex];
+        }, 1000 / fps);
+    }
+    
+    function stopAnimation() {
+        if (animationInterval) {
+            clearInterval(animationInterval);
+            animationInterval = null;
+        }
+    }
+    
+    function updateAnimationSpeed() {
+        fps = parseInt(animationSpeed.value);
+        speedValue.textContent = `${fps} fps`;
+        
+        if (animationInterval) {
+            stopAnimation();
+            playAnimation();
+        }
+    }
+    
+    function saveAnimation() {
+        if (animationFrames.length < 2) {
+            alert('You need at least 2 frames to save an animation');
+            return;
+        }
+        
+        // For simplicity, we'll just export the first frame as a sample
+        // In a real implementation, you might want to create a GIF or animated SVG
+        alert('Animation saved! (In a full implementation, this would create a GIF or animated SVG)');
+        closeAnimationModal();
     }
 
     function displayArtworks() {

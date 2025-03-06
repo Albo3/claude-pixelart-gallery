@@ -246,3 +246,144 @@ button:hover {
 .hidden {
     display: none;
 }
+
+/* Color Palette */
+.color-palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-width: 200px;
+}
+
+.palette-color {
+    width: 25px;
+    height: 25px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.palette-color:hover {
+    transform: scale(1.1);
+}
+
+.palette-color.active {
+    border: 2px solid #333;
+}
+
+/* Animation Frames */
+.frames-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+#frames-list {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 10px 0;
+}
+
+.frame-item {
+    border: 1px solid #ddd;
+    padding: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+}
+
+.frame-item.active {
+    border: 2px solid #4CAF50;
+}
+
+.frame-item svg {
+    width: 80px;
+    height: 80px;
+}
+
+.frame-delete {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ff5252;
+    color: white;
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.frames-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.animation-preview {
+    border: 1px solid #ddd;
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+#animation-display {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#animation-display svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.animation-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Tool Buttons */
+#bucket-fill, #animation-btn, #export-svg, #export-png {
+    background-color: #f0f0f0;
+}
+
+#bucket-fill:hover, #animation-btn:hover, #export-svg:hover, #export-png:hover {
+    background-color: #e0e0e0;
+}
+
+#animation-btn {
+    background-color: #9c27b0;
+    color: white;
+}
+
+#animation-btn:hover {
+    background-color: #7b1fa2;
+}
+
+#export-svg, #export-png {
+    background-color: #2196F3;
+    color: white;
+}
+
+#export-svg:hover, #export-png:hover {
+    background-color: #1976D2;
+}
+
+/* Active tool state */
+.tool-active {
+    background-color: #555 !important;
+    color: white !important;
+}
